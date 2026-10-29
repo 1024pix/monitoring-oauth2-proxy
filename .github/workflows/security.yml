@@ -1,0 +1,32 @@
+name: "Pix Security Checks"
+
+on:
+  # push:
+  pull_request:
+    branches:
+      - main
+
+# No output in comment since this is a fork and the token doesnt have the needed privileges
+jobs:
+  check_risk_score:
+    runs-on: ubuntu-latest
+    outputs:
+      riskscore: ${{ steps.riskscoreFromDT.outputs.riskscore }}
+      status: ${{ steps.riskscoreFromDT.outputs.status }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: 
+          persist-credentials: false
+
+      - name: Generates BoM and upload to OWASP DTrack
+        id: riskscoreFromDT
+        uses:  1024pix/check-dependency-track-action/golang@5cec47a8e9a1b4fac47e72daad532cacf4876f58
+        with:
+          url: ${{ secrets.DEPENDENCYTRACK_URL }}
+          key: '${{ secrets.DEPENDENCYTRACK_APIKEY }}'
+          basic_user: '${{ secrets.DEPENDENCYTRACK_BASIC_USER }}'
+          basic_password: '${{ secrets.DEPENDENCYTRACK_BASIC_PASSWORD }}'
+      
+      - name: Get the risk score
+        run: echo "The risk score of the project is ${{ steps.riskscoreFromDT.outputs.riskscore }}"
+
